@@ -165,7 +165,7 @@ export default function AdPreviewer() {
             
             {/* The real auto-rickshaw photo */}
             <img
-              src="/auto-back.jpg"
+              src="/nookncorners/auto-back.jpg"
               alt="Auto Rickshaw Mockup"
               className="w-full h-full object-cover"
             />
