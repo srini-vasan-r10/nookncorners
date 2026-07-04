@@ -48,7 +48,7 @@ export default function AdPreviewer({
   
   // AI Settings State (stored in browser localstorage)
   const [apiKey, setApiKey] = useState("");
-  const [selectedModel, setSelectedModel] = useState("google/gemini-2.5-flash");
+  const [selectedModel, setSelectedModel] = useState("meta-llama/llama-3.3-70b-instruct:free");
   const [showSettings, setShowSettings] = useState(false);
   const [isLoadingAi, setIsLoadingAi] = useState(false);
   const [aiResponse, setAiResponse] = useState<string | null>(null);
@@ -56,15 +56,16 @@ export default function AdPreviewer({
   useEffect(() => {
     if (typeof window !== "undefined") {
       setApiKey(localStorage.getItem("nc_openrouter_key") || "");
-      setSelectedModel(localStorage.getItem("nc_openrouter_model") || "google/gemini-2.5-flash");
+      setSelectedModel(localStorage.getItem("nc_openrouter_model") || "meta-llama/llama-3.3-70b-instruct:free");
     }
   }, []);
 
   const saveSettings = (key: string, model: string) => {
-    setApiKey(key);
+    const trimmed = key.trim();
+    setApiKey(trimmed);
     setSelectedModel(model);
     if (typeof window !== "undefined") {
-      localStorage.setItem("nc_openrouter_key", key);
+      localStorage.setItem("nc_openrouter_key", trimmed);
       localStorage.setItem("nc_openrouter_model", model);
     }
   };
@@ -90,7 +91,8 @@ export default function AdPreviewer({
 
   // Fetch feedback from OpenRouter if Key is present
   const fetchAiFeedback = async (stepIndex: number) => {
-    if (!apiKey) {
+    const trimmedKey = apiKey.trim();
+    if (!trimmedKey) {
       setAiResponse(null);
       return;
     }
@@ -101,7 +103,7 @@ export default function AdPreviewer({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
+          "Authorization": `Bearer ${trimmedKey}`,
           "HTTP-Referer": "https://srini-vasan-r10.github.io/nookncorners/",
           "X-Title": "N&C Campaign Assistant",
         },
@@ -131,6 +133,12 @@ export default function AdPreviewer({
       });
 
       const data = await response.json();
+      
+      if (data.error) {
+        setAiResponse(`OpenRouter Error: ${data.error.message || JSON.stringify(data.error)}`);
+        return;
+      }
+
       const text = data.choices?.[0]?.message?.content;
       if (text) {
         setAiResponse(text);
@@ -249,9 +257,9 @@ export default function AdPreviewer({
                     onChange={(e) => saveSettings(apiKey, e.target.value)}
                     className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded text-xs text-white focus:outline-none"
                   >
-                    <option value="google/gemini-2.5-flash">Gemini 2.5 Flash (Fastest)</option>
-                    <option value="meta-llama/llama-3-8b-instruct:free">Llama 3 8B (Free)</option>
-                    <option value="mistralai/mistral-7b-instruct:free">Mistral 7B (Free)</option>
+                    <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B (Free / High Quality)</option>
+                    <option value="cohere/north-mini-code:free">Cohere North Mini Code (Free / Fast)</option>
+                    <option value="google/gemma-4-31b-it:free">Gemma 4 31B IT (Free / Stable)</option>
                   </select>
                 </div>
                 <p className="text-[9px] text-slate-500 italic">
