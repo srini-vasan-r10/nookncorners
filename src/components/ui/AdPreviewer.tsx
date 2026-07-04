@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { 
   Utensils, Dumbbell, HeartPulse, Scissors, GraduationCap, 
-  Store, Building2, ChevronRight, ChevronLeft, Sparkles, 
-  Lightbulb, Check, HelpCircle, ArrowRight, Settings, Loader2
+  Store, Building2, Sparkles, Lightbulb, Check, HelpCircle, 
+  ArrowRight, Settings, Loader2, RefreshCw
 } from "lucide-react";
 
 export const INDUSTRIES = [
@@ -42,7 +42,6 @@ export default function AdPreviewer({
   adColor,
   setAdColor
 }: AdPreviewerProps) {
-  const [currentStep, setCurrentStep] = useState(0);
   const [showAd, setShowAd] = useState(true);
   const [typingText, setTypingText] = useState("");
   
@@ -70,30 +69,14 @@ export default function AdPreviewer({
     }
   };
 
-  const steps = [
-    { title: "Welcome", description: "Start campaign setup" },
-    { title: "Brand", description: "Set business name" },
-    { title: "Slogan", description: "Write banner catchphrase" },
-    { title: "Contact", description: "Add phone number" },
-    { title: "Category", description: "Select industry design" },
-    { title: "Review", description: "Mockup preview" }
-  ];
-
-  // Fallback static guide messages
-  const staticMessages = [
-    "Vanakkam! I'm Vani, your N&C Campaign Guide. 🛺 Let's design a high-converting auto banner for your brand in under 60 seconds. Ready to get started?",
-    "First, what is your Business or Shop Name? Keep it under 25 letters so motorists can read it quickly in traffic!",
-    "Great! Now write a Slogan or Offer text (e.g., '10% Discount' or 'Free Home Delivery'). A short benefit is highly memorable!",
-    "Perfect! What is the primary Phone or WhatsApp number customers should call? Spacing the digits makes it easier to read.",
-    "Almost done! Select your Industry Category. I will apply a color scheme and icon mathematically optimized for your sector.",
-    "Outstanding! Your photorealistic mockup is ready on the right. How does it look? Press 'Calculate Budget' to plan your route!"
-  ];
+  // Welcome static guide message
+  const welcomeMessage = "Vanakkam! I'm Vani, your N&C Campaign Guide. 🛺 Fill in your business name, catchphrase, and phone number below to design your banner. Click the 🔄 icon next to my name to consult the AI for a real-time design review!";
 
   // Fetch feedback from OpenRouter if Key is present
-  const fetchAiFeedback = async (stepIndex: number) => {
+  const fetchAiFeedback = async () => {
     const trimmedKey = apiKey.trim();
     if (!trimmedKey) {
-      setAiResponse(null);
+      setAiResponse("Please configure your OpenRouter API key in the settings panel below to consult the AI guide!");
       return;
     }
     
@@ -113,20 +96,19 @@ export default function AdPreviewer({
             {
               role: "system",
               content: `You are Vani, a friendly local campaign guide for N&C (nook & corner) transit ads in Madurai.
-              Analyze the user's input and provide a highly supportive, extremely short (max 2 sentences) review or tip.
+              Analyze the user's ad layout and give a constructive, super-short (max 2 sentences) review or tip.
               Mention Madurai roads, traffic spots (like Goripalayam, Simmakkal, Periyar), or local motorists looking at the banner if relevant.
               Always write in a warm, welcoming tone. Speak as Vani.`
             },
             {
               role: "user",
-              content: `The user is at Step ${stepIndex} (${steps[stepIndex].title}).
-              Current Ad Setup:
+              content: `Please analyze my current N&C ad details:
               - Business Name: "${businessName || "Not set"}"
               - Slogan/Offer: "${slogan || "Not set"}"
               - Phone: "${phone || "Not set"}"
               - Category: "${industry.label}"
 
-              Please analyze the input for Step ${stepIndex} (either the brand name, slogan, phone, or category selection) and give immediate, helpful feedback.`
+              How can I optimize this layout for maximum high-contrast visibility on Madurai roads?`
             }
           ]
         })
@@ -153,43 +135,22 @@ export default function AdPreviewer({
     }
   };
 
-  // Trigger AI advice on step change
+  // Handle typing display text using direct substring slicing to avoid state race conditions
   useEffect(() => {
-    if (apiKey && currentStep > 0) {
-      fetchAiFeedback(currentStep);
-    } else {
-      setAiResponse(null);
-    }
-  }, [currentStep, apiKey]);
-
-  // Handle typing display text
-  useEffect(() => {
-    let index = 0;
-    setTypingText("");
-    const baseMessage = aiResponse || staticMessages[currentStep];
+    let index = 1;
+    const baseMessage = aiResponse || welcomeMessage;
+    setTypingText(baseMessage.slice(0, 1));
     
     const interval = setInterval(() => {
       if (index < baseMessage.length) {
-        setTypingText((prev) => prev + baseMessage.charAt(index));
+        setTypingText(baseMessage.slice(0, index + 1));
         index++;
       } else {
         clearInterval(interval);
       }
-    }, 10);
+    }, 8);
     return () => clearInterval(interval);
-  }, [currentStep, aiResponse]);
-
-  const handleNext = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep((prev) => prev + 1);
-    }
-  };
-
-  const handleBack = () => {
-    if (currentStep > 0) {
-      setCurrentStep((prev) => prev - 1);
-    }
-  };
+  }, [aiResponse]);
 
   const handleIndustrySelect = (ind: typeof INDUSTRIES[0]) => {
     setIndustry(ind);
@@ -200,22 +161,22 @@ export default function AdPreviewer({
   const IconComponent = industry.icon;
 
   return (
-    <div className="w-full max-w-5xl mx-auto glass-card rounded-3xl overflow-hidden p-6 md:p-10 border border-slate-200/80">
+    <div className="w-full max-w-6xl mx-auto glass-card rounded-3xl overflow-hidden p-6 md:p-10 border border-slate-200/80">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         
-        {/* Left Onboarding Assistant Wizard */}
+        {/* Left Control Panel & Onboarding Assistant */}
         <div className="lg:col-span-6 flex flex-col justify-between bg-slate-900 text-white rounded-2xl border border-slate-950 p-6 shadow-xl relative overflow-hidden">
           {/* Subtle background gradient glow */}
           <div className="absolute -top-12 -left-12 w-40 h-40 bg-brand-blue-500/10 rounded-full blur-3xl pointer-events-none" />
           
-          <div className="space-y-6 z-10 relative">
+          <div className="space-y-5 z-10 relative">
             
-            {/* Step Indicators */}
-            <div className="flex justify-between items-center border-b border-slate-800/80 pb-4">
+            {/* Header / Guide Title */}
+            <div className="flex justify-between items-center border-b border-slate-800/80 pb-3">
               <div className="flex gap-1.5 items-center">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block animate-pulse" />
                 <span className="text-[11px] uppercase tracking-widest text-slate-400 font-bold">
-                  Step {currentStep + 1} of {steps.length}
+                  Campaign Assistant
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -229,7 +190,7 @@ export default function AdPreviewer({
                   <Settings className="w-3.5 h-3.5" />
                 </button>
                 <span className="text-xs font-bold text-amber-400 bg-amber-400/15 px-2 py-0.5 rounded-md">
-                  {steps[currentStep].title}
+                  Vani Guide
                 </span>
               </div>
             </div>
@@ -279,39 +240,37 @@ export default function AdPreviewer({
               </div>
               
               {/* Chat Bubble */}
-              <div className="bg-slate-800/80 border border-slate-700/50 p-4 rounded-2xl rounded-tl-none text-slate-200 text-xs md:text-sm leading-relaxed shadow-sm min-h-[70px] flex-1">
+              <div className="bg-slate-800/80 border border-slate-700/50 p-4 rounded-2xl rounded-tl-none text-slate-200 text-xs md:text-sm leading-relaxed shadow-sm min-h-[70px] flex-1 relative group">
                 <span className="font-bold text-[10px] text-amber-400 uppercase tracking-wider block mb-1 flex items-center justify-between">
                   <span>Vani (N&C Guide)</span>
-                  {isLoadingAi && (
-                    <span className="flex items-center gap-1 text-[9px] text-slate-400 lowercase font-normal italic">
-                      <Loader2 className="w-2.5 h-2.5 animate-spin" /> consulting AI...
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    {isLoadingAi && (
+                      <span className="flex items-center gap-1 text-[9px] text-slate-400 lowercase font-normal italic">
+                        <Loader2 className="w-2.5 h-2.5 animate-spin" /> consulting AI...
+                      </span>
+                    )}
+                    <button
+                      onClick={fetchAiFeedback}
+                      disabled={isLoadingAi}
+                      className="p-1 rounded bg-slate-900 hover:bg-slate-950 border border-slate-700 text-amber-400 transition-colors flex items-center gap-1 text-[10px] font-bold"
+                      title="Consult Vani for layout analysis"
+                    >
+                      <RefreshCw className={`w-3 h-3 ${isLoadingAi ? "animate-spin" : ""}`} />
+                      <span>Consult AI</span>
+                    </button>
+                  </div>
                 </span>
                 {typingText}
               </div>
             </div>
 
-            {/* Wizard Input Sections */}
-            <div className="pt-2 min-h-[140px] flex items-center">
+            {/* UNIFIED OPTIONS FORM - Single Spot Editor */}
+            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-4">
               
-              {/* Step 0: Welcome */}
-              {currentStep === 0 && (
-                <div className="w-full text-center space-y-4">
-                  <div className="inline-flex p-3 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/20">
-                    <Sparkles className="w-6 h-6 animate-pulse" />
-                  </div>
-                  <div className="space-y-1">
-                    <h4 className="font-extrabold text-base text-white">Let's design your transit banner</h4>
-                    <p className="text-slate-400 text-xs">AI reviews each step if OpenRouter is connected.</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 1: Business Name */}
-              {currentStep === 1 && (
-                <div className="w-full space-y-2">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Option 1: Business Name */}
+                <div className="space-y-1.5">
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">
                     Business Name
                   </label>
                   <input
@@ -319,140 +278,98 @@ export default function AdPreviewer({
                     value={businessName}
                     onChange={(e) => setBusinessName(e.target.value)}
                     maxLength={26}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-800 bg-slate-950 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all font-semibold"
-                    placeholder="e.g. Madurai Biryani Spot"
-                    autoFocus
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-800 bg-slate-900 text-white text-xs focus:outline-none focus:ring-1 focus:ring-amber-400 transition-all font-semibold"
+                    placeholder="e.g. Kumar Jewellery"
                   />
                 </div>
-              )}
 
-              {/* Step 2: Slogan */}
-              {currentStep === 2 && (
-                <div className="w-full space-y-2">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    Slogan / Banner Offer
-                  </label>
-                  <input
-                    type="text"
-                    value={slogan}
-                    onChange={(e) => setSlogan(e.target.value)}
-                    maxLength={40}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-800 bg-slate-950 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all font-semibold"
-                    placeholder="e.g. Delicious Food, Free Delivery"
-                    autoFocus
-                  />
-                </div>
-              )}
-
-              {/* Step 3: Contact */}
-              {currentStep === 3 && (
-                <div className="w-full space-y-2">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    WhatsApp or Call Number
+                {/* Option 3: Phone Number */}
+                <div className="space-y-1.5">
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                    WhatsApp / Call Number
                   </label>
                   <input
                     type="text"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     maxLength={15}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-800 bg-slate-950 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all font-semibold tracking-wider"
-                    placeholder="e.g. 98037 20129"
-                    autoFocus
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-800 bg-slate-900 text-white text-xs focus:outline-none focus:ring-1 focus:ring-amber-400 transition-all font-semibold tracking-wider"
+                    placeholder="e.g. 89027 20129"
                   />
                 </div>
-              )}
+              </div>
 
-              {/* Step 4: Category Grid */}
-              {currentStep === 4 && (
-                <div className="w-full space-y-2">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    Choose Template Group
-                  </label>
-                  <div className="grid grid-cols-4 gap-2 max-h-[120px] overflow-y-auto pr-1">
-                    {INDUSTRIES.map((ind) => {
-                      const IndIcon = ind.icon;
-                      const isSelected = industry.id === ind.id;
-                      return (
-                        <button
-                          key={ind.id}
-                          onClick={() => handleIndustrySelect(ind)}
-                          type="button"
-                          className={`flex flex-col items-center justify-center py-2.5 px-1.5 rounded-xl border text-center transition-all ${
-                            isSelected 
-                              ? "border-amber-400 bg-amber-400/10 text-amber-400 font-bold" 
-                              : "border-slate-800 hover:border-slate-700 text-slate-400 bg-slate-950"
-                          }`}
-                        >
-                          <IndIcon className="w-4 h-4 mb-1" />
-                          <span className="text-[9px] leading-tight truncate w-full">{ind.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+              {/* Option 2: Slogan */}
+              <div className="space-y-1.5">
+                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                  Slogan / Banner Offer text
+                </label>
+                <input
+                  type="text"
+                  value={slogan}
+                  onChange={(e) => setSlogan(e.target.value)}
+                  maxLength={40}
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-800 bg-slate-900 text-white text-xs focus:outline-none focus:ring-1 focus:ring-amber-400 transition-all font-semibold"
+                  placeholder="e.g. your brand. every nook. every corner."
+                />
+              </div>
 
-              {/* Step 5: Review & Launch */}
-              {currentStep === 5 && (
-                <div className="w-full text-center space-y-3">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold text-xs justify-center w-fit mx-auto">
-                    <Check className="w-4 h-4" /> Mockup Successfully Generated
-                  </div>
-                  <p className="text-slate-400 text-xs leading-relaxed max-w-sm mx-auto">
-                    Your ad fits perfectly in the auto-rickshaw panel. Click the button below to compute rates and book.
-                  </p>
+              {/* Option 4: Category Select */}
+              <div className="space-y-1.5">
+                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                  Choose Design Category
+                </label>
+                <div className="grid grid-cols-4 md:grid-cols-7 gap-1.5">
+                  {INDUSTRIES.map((ind) => {
+                    const IndIcon = ind.icon;
+                    const isSelected = industry.id === ind.id;
+                    return (
+                      <button
+                        key={ind.id}
+                        onClick={() => handleIndustrySelect(ind)}
+                        type="button"
+                        className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg border text-center transition-all ${
+                          isSelected 
+                            ? "border-amber-400 bg-amber-400/10 text-amber-400 font-bold" 
+                            : "border-slate-800 hover:border-slate-700 text-slate-400 bg-slate-900"
+                        }`}
+                        title={ind.label}
+                      >
+                        <IndIcon className="w-3.5 h-3.5 mb-1" />
+                        <span className="text-[8px] leading-tight truncate w-full">{ind.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
-              )}
+              </div>
 
             </div>
 
             {/* Dynamic Lightbulb Helper Tip */}
-            {currentStep > 0 && (
-              <div className="flex gap-2 p-3 bg-amber-400/5 border border-amber-400/10 rounded-xl text-[11px] leading-relaxed text-amber-200/90 z-10 relative">
-                <Lightbulb className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <span className="font-bold text-amber-400 block mb-0.5">Tip:</span>
-                  {currentStep === 4 ? industry.tip : steps[currentStep].title === "Brand" ? "A shorter business name (2-3 words) is 80% easier for drivers to read in moving traffic!" : steps[currentStep].title === "Slogan" ? "Focus on your unique selling point (like '24hr Service' or 'Direct from Farm')." : "Always double-check that your phone number has correct spacing for maximum readability!"}
-                </div>
+            <div className="flex gap-2 p-3 bg-amber-400/5 border border-amber-400/10 rounded-xl text-[11px] leading-relaxed text-amber-200/90 z-10 relative">
+              <Lightbulb className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold text-amber-400 block mb-0.5">Tip:</span>
+                {industry.tip}
               </div>
-            )}
+            </div>
 
           </div>
 
           {/* Navigation Controls */}
-          <div className="flex gap-3 pt-6 border-t border-slate-800/80 mt-6 lg:mt-0 z-10 relative">
-            {currentStep > 0 && (
-              <button
-                type="button"
-                onClick={handleBack}
-                className="flex items-center justify-center gap-1 px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950 text-slate-300 hover:text-white hover:bg-slate-900 transition-all font-semibold text-xs"
-              >
-                <ChevronLeft className="w-4 h-4" /> Back
-              </button>
-            )}
-            
-            {currentStep < steps.length - 1 ? (
-              <button
-                type="button"
-                onClick={handleNext}
-                className="flex-1 flex items-center justify-center gap-1 px-4 py-2.5 rounded-xl bg-amber-400 text-slate-950 hover:bg-amber-500 transition-all font-bold text-xs shadow-md"
-              >
-                {currentStep === 0 ? "Start Designing" : "Next Step"} <ChevronRight className="w-4 h-4" />
-              </button>
-            ) : (
-              <a
-                href="#booking-calculator"
-                className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-brand-blue-600 hover:bg-brand-blue-700 text-white transition-all font-bold text-xs shadow-md"
-              >
-                Calculate Budget & Book <ArrowRight className="w-4 h-4" />
-              </a>
-            )}
+          <div className="flex gap-3 pt-4 border-t border-slate-800/80 mt-5 z-10 relative">
+            <a
+              href="#booking-calculator"
+              className="flex-1 flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl bg-brand-blue-600 hover:bg-brand-blue-700 text-white transition-all font-bold text-xs shadow-md"
+            >
+              Calculate Budget & Book <ArrowRight className="w-4 h-4" />
+            </a>
           </div>
 
         </div>
 
         {/* Right Photorealistic Mockup Frame */}
-        <div className="lg:col-span-7 flex flex-col items-center justify-center bg-slate-100/60 rounded-2xl p-4 md:p-8 border border-slate-200/50 relative overflow-hidden min-h-[380px]">
+        <div className="lg:col-span-6 flex flex-col items-center justify-center bg-slate-100/60 rounded-2xl p-4 md:p-8 border border-slate-200/50 relative overflow-hidden min-h-[380px]">
           <div className="absolute inset-0 bg-grid-pattern opacity-60 pointer-events-none" />
           
           {/* Toggle View */}
