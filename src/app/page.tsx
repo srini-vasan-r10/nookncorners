@@ -7,7 +7,7 @@ import {
   Sparkles, Award, Users, Image as ImageIcon, Flame 
 } from "lucide-react";
 import WhatsAppButton from "@/components/ui/WhatsAppButton";
-import AdPreviewer from "@/components/ui/AdPreviewer";
+import AdPreviewer, { INDUSTRIES } from "@/components/ui/AdPreviewer";
 import MapComponent from "@/components/ui/MapComponent";
 import CampaignCalculator from "@/components/ui/CampaignCalculator";
 
@@ -73,6 +73,13 @@ const FAQS = [
 
 export default function LandingPage() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
+
+  // Lifted states for visualizer & calculator synchronization
+  const [businessName, setBusinessName] = useState("N&C (nook & corner)");
+  const [slogan, setSlogan] = useState("your brand. every nook. every corner.");
+  const [phone, setPhone] = useState("89037 20129");
+  const [industry, setIndustry] = useState(INDUSTRIES[0]); // Default Retail/Supermarket
+  const [adColor, setAdColor] = useState("bg-amber-500");
 
   const toggleFaq = (index: number) => {
     setActiveFaq(activeFaq === index ? null : index);
@@ -456,7 +463,18 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <AdPreviewer />
+          <AdPreviewer
+            businessName={businessName}
+            setBusinessName={setBusinessName}
+            slogan={slogan}
+            setSlogan={setSlogan}
+            phone={phone}
+            setPhone={setPhone}
+            industry={industry}
+            setIndustry={setIndustry}
+            adColor={adColor}
+            setAdColor={setAdColor}
+          />
         </div>
       </section>
 
@@ -475,7 +493,13 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <CampaignCalculator />
+          <CampaignCalculator
+            businessName={businessName}
+            setBusinessName={setBusinessName}
+            phoneNumber={phone}
+            setPhoneNumber={setPhone}
+            slogan={slogan}
+          />
         </div>
       </section>
 

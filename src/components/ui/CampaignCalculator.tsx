@@ -3,7 +3,21 @@
 import React, { useState, useEffect } from "react";
 import { Calculator, MessageSquare, Info, Calendar, Sparkles } from "lucide-react";
 
-export default function CampaignCalculator() {
+interface CampaignCalculatorProps {
+  businessName: string;
+  setBusinessName: (val: string) => void;
+  phoneNumber: string;
+  setPhoneNumber: (val: string) => void;
+  slogan: string;
+}
+
+export default function CampaignCalculator({
+  businessName,
+  setBusinessName,
+  phoneNumber,
+  setPhoneNumber,
+  slogan
+}: CampaignCalculatorProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -11,10 +25,8 @@ export default function CampaignCalculator() {
   }, []);
 
   const [autoCount, setAutoCount] = useState(5);
-  const [businessName, setBusinessName] = useState("");
   const [targetArea, setTargetArea] = useState("Mattuthavani");
   const [contactName, setContactName] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
   const [emailAddress, setEmailAddress] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
